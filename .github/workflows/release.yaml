@@ -1,0 +1,25 @@
+# https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
+name: Publish to NPM
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.release.target_commitish }}
+      - uses: actions/setup-node@v2.4.1
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org/
+          scope: '@assaf'
+      - run: git config --global user.name "Assaf Arkin"
+      - run: git config --global user.email "assaf@labnotes.org"
+      - run: yarn install
+      - run: yarn publish --new-version ${{ github.event.release.tag_name }} --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
