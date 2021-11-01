@@ -15,6 +15,10 @@
   },
   "author": "Assaf Arkin <assaf@labnotes.org> (http://labnotes.org/)",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/assaf/react-one-tap.git"
+  },
   "devDependencies": {
     "@types/node": "^16.11.6",
     "@types/react": "^17.0.33",
