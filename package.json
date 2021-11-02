@@ -1,14 +1,14 @@
 {
   "name": "@assaf/react-one-tap",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Google One Tap for React",
   "main": "dist/index.js",
   "types": "dist/types/index.d.ts",
   "scripts": {
-    "npm-publish": "yarn build && npm publish",
     "lint": "eslint src/**/*",
     "prebuild": "rimraf dist",
-    "build": "tsc -p src/browser/tsconfig.json && tsc -p src/server/tsconfig.json"
+    "build": "tsc -p src/browser/tsconfig.json && tsc -p src/server/tsconfig.json",
+    "prepack": "yarn build"
   },
   "author": "Assaf Arkin <assaf@labnotes.org> (https://labnotes.org/)",
   "homepage": "https://github.com/assaf/react-one-tap",
@@ -16,7 +16,7 @@
   "repository": "github:assaf/react-one-tap.git",
   "keywords": ["react", "authenticate", "one-tap", "sign-in", "sign-in with google" ],
   "files": [
-    "dist",
+    "dist/**/*",
     "README.md"
   ],
   "devDependencies": {
