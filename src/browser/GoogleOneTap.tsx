@@ -1,16 +1,14 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Profile } from "./Profile";
 
 export declare type OneTapOptions = {
-  // If true, automatically signs in user when they return to the page.
+  // If true (default), automatically signs in user when they visit the page for
+  // the first time (supported browsers only), or return to the page after their
+  // token expired.
   //
-  // Only applies if the user has signed in before, and their token expired.
-  //
-  // User can still cancel.
-  //
-  // If false, then after the session expires, the user will be prompted to sign
-  // in again.
-  autoSelect?: boolean;
+  // If false, then you need to specify `fallback.buttonId`, for a button the
+  // user can click to sign in.
+  automatic?: boolean;
 
   // The OAuth client ID for your web application.  Required.
   clientId: string;
@@ -59,6 +57,7 @@ export const GoogleOneTapContext = React.createContext<OneTapContext>({
 
 export default function GoogleOneTap({
   children,
+  automatic = true,
   ...options
 }: {
   children: React.ReactNode | ((context: OneTapContext) => React.ReactNode);
@@ -72,6 +71,17 @@ export default function GoogleOneTap({
     setToken,
     token,
   });
+
+  useEffect(
+    function () {
+      if (profile) {
+        const expiresIn = (profile.exp - profile.iat) * 1000;
+        const timeout = setTimeout(clearToken, expiresIn);
+        return () => clearTimeout(timeout);
+      }
+    },
+    [profile]
+  );
 
   const context: OneTapContext = {
     headers: token ? { authorization: `Bearer ${token}` } : undefined,
@@ -157,11 +167,14 @@ function useGoogleAPI({
   signOut: () => void;
 } {
   if (!options?.clientId) throw new Error("Missing clientId");
+  if (!(options.automatic || options.fallback?.buttonId))
+    throw new Error("Missing fallback.buttonId");
+
   const withScript = useWithScript();
 
   withScript(function initializeAPI() {
     google.accounts.id.initialize({
-      auto_select: options.autoSelect,
+      auto_select: options.automatic,
       callback: ({ credential }) => setToken(credential),
       client_id: options.clientId,
       context: options.context,
@@ -172,7 +185,8 @@ function useGoogleAPI({
     () =>
       withScript(() => {
         if (token) google.accounts.id.cancel();
-        else promptToSignIn(options);
+        else if (options.automatic) promptToSignIn(options);
+        else renderSignInButton(options);
       }),
     [token]
   );
