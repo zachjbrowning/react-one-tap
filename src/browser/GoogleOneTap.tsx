@@ -105,17 +105,6 @@ function useLocalStorage(keyName: string): {
   );
   const { profile, token } = verify(unverifiedToken);
 
-  const eventName = `change:${keyName}`;
-
-  React.useEffect(function () {
-    window.addEventListener(eventName, onOneTapChanged);
-    return () => window.removeEventListener(eventName, onOneTapChanged);
-
-    function onOneTapChanged(event: Event) {
-      setToken((event as CustomEvent).detail);
-    }
-  }, []);
-
   React.useEffect(function watchOtherTabs() {
     window.addEventListener("storage", onStorageEvent);
     return () => window.removeEventListener("storage", onStorageEvent);
@@ -129,7 +118,6 @@ function useLocalStorage(keyName: string): {
     function persistToken() {
       if (token) window.localStorage.setItem(keyName, token);
       else window.localStorage.removeItem(keyName);
-      window.dispatchEvent(new CustomEvent(eventName, { detail: token }));
     },
     [token]
   );
