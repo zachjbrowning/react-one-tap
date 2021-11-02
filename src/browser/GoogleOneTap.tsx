@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Profile } from "./Profile";
 
 export declare type OneTapOptions = {
@@ -49,13 +49,12 @@ export declare type OneTapContext = {
   signOut: () => void;
 
   // This is the OAuth Bearer token.
-  token?: string | null;
+  token?: string;
 };
 
 export const GoogleOneTapContext = React.createContext<OneTapContext>({
   isSignedIn: false,
   signOut: () => undefined,
-  token: null,
 });
 
 export default function GoogleOneTap({
@@ -98,12 +97,13 @@ function useLocalStorage(keyName: string): {
   clearToken: () => void;
   profile?: Profile;
   setToken: (token: string | null) => void;
-  token: string | null;
+  token?: string;
 } {
   const [unverifiedToken, setToken] = React.useState(() =>
     typeof localStorage !== "undefined" ? localStorage.getItem(keyName) : null
   );
-  const { profile, token } = verify(unverifiedToken);
+  const profile = useMemo(() => verify(unverifiedToken), [unverifiedToken]);
+  const token = (profile && unverifiedToken) ?? undefined;
 
   React.useEffect(function watchOtherTabs() {
     window.addEventListener("storage", onStorageEvent);
@@ -130,18 +130,15 @@ function useLocalStorage(keyName: string): {
   };
 }
 
-function verify(token: string | null): {
-  token: string | null;
-  profile?: Profile;
-} {
-  if (!token) return { token };
+function verify(token: string | null): Profile | undefined {
+  if (!token) return;
   try {
     const profile = decodeJWT(token);
     const { exp } = profile;
     const isExpired = exp * 1000 < Date.now();
-    return isExpired ? { token: null } : { profile, token };
+    return isExpired ? undefined : profile;
   } catch (error) {
-    return { token: null };
+    return;
   }
 }
 
@@ -155,7 +152,7 @@ function useGoogleAPI({
   clearToken: () => void;
   options: OneTapOptions;
   setToken: (token: string | null) => void;
-  token: string | null;
+  token?: string;
 }): {
   signOut: () => void;
 } {
