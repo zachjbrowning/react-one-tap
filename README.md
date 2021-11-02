@@ -1,4 +1,46 @@
-## Install/Usage
+React components for [one-tap sign-in](https://developers.google.com/identity/one-tap/) with your Google account.
+
+
+## Why?
+
+[One-Tap](https://developers.google.com/identity/gsi/web/guides/overview) is a super simple UI for signing with your Google account.
+
+In supported browsers, one-tap is a slick user experience. It pops an overlay at the top/right of the page, with your active Google account. It takes a single click to sign in.
+
+(And it supports having multiple Google accounts and let you switch between them)
+
+When you return to the app after your token has expired (~1 hour), it will automatically sign you in again with a new token. There's a short delay which allows you to cancel.
+
+You're not going to be bouncing around through multiple pages, the jerky OAuth flow you get with "Sign in with X" buttons.
+
+So this is the quickest and easiest way I found to add single sign-on.
+
+
+## No Free Launches
+
+There are tradeoffs of course.
+
+The user experience is great in supported browsers. That means Chrome, Firefox, and Edge (not Safari). On every operating system except for iOS and iPadOS, because those only have one browser (all other browsers are re-skinned Safari).
+
+The user experience on unsupported browsers is not bad, it's just no better than OAuth.
+
+This only works for users that have a Google account. However, you don't need a GMail or G Suite account. And many people have Google accounts, they use them for YouTube, Google Docs, Android, etc.
+
+This UI doesn't blend well with other methods of authentication. So if you want to give users multiple options — email/password, magic link, Facebook, GitHub, etc — you should be using OAuth instead.
+
+It should go without saying you're helping Google track users across the web. Because cookies are going away, the next best thing is to try and get everyone to sign in with their Google account.
+
+
+## Regardless …
+
+I'm using this for "internal" apps. I know every user has a Google account, so not going to bother with other methods of authentication.
+
+And we're using other Google products, so already signed into the account, so this is the easiest SSO experience.
+
+If you trust Google to authenticate users, then it's a pretty good authentication mechanism. On the back-end verify users by checking email address, or email domain.
+
+
+## Install
 
 ```bash
 yarn add @assaf/react-one-tap
@@ -38,57 +80,63 @@ function LoginRequired({ children }) {
 }
 ```
 
-If the user is authenticated, then `isSignIn` is true, and you get their Google profile (`profile`), and JWT access token (`token`).
+If the user is authenticated, then `isSignIn` is true. You also get the JWT access token (`token`) and their Google profile (`profile`).
 
-The profile will include their full name, email address, profile picture, and more fields. See [Profile](src/browser/Profile).
+The profile will include their name, email address, picture, etc. See [Profile](src/browser/Profile).
 
-You are responsible to display a button that allows the user to sign out.  That will sign them out of all open tabs and windows. It will also revoke the access token. It will not sign them out from other browsers/devices.
+To allow users to sign out, you need to render a button that will call `signOut`. It will sign them out of all open tabs, and revoke their access token. It will not sign them out of other browsers/devices.
 
-On Safari and iOS, if the user has not signed in before, the UI should show them a sign in button. This is done by creating a container element with a known ID, and setting the `fallback` option.
+On Safari and iOS, if the user has not signed in before, then the one-tap overlay doesn't show. If you want these users to sign in, you need to use the `fallback` option.
 
-Chrome, Firefox, and Edge (except on iOS) will show the one-tap UX.
+That option expects the ID of a container element. It will render a sign-in button into that element.
 
 
-## Pass token to server
+## Pass JWT Token to Server
 
-With SWR:
+With [SWR](https://swr.vercel.app) you can do somethig like this:
 
-```javascript
+```typescript
 import { useGoogleOneTap } from "@assaf/react-one-tap";
 
 function MyComponent() {
   const { headers, signOut } = useGoogleOneTap();
 
-  const { data, error } = useSWR(token ? "/api" : null, async (path) => {
-    const response = await fetch(path, { headers });
-    if (response.ok) return await response.json();
-    if (response.status === 403) signOut();
-    const { error } = await response.json();
-    throw new Error(error);
-  });
+  const { data, error } = useSWR(
+    token ? "/api" : null,
+    async (path) => {
+      const response = await fetch(path, { headers });
+      if (response.ok) {
+        return await response.json();
+      } else {
+        if (response.status === 403) signOut();
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+    });
   ...
 }
 ```
 
 Or using `SWRConfig`:
 
-```jsx
+```tsx
 import { useGoogleOneTap } from "@assaf/react-one-tap";
 
-function DefaultFetcher({ children }) {
+function WithFetcher({ children }) {
   const { headers, signOut } = useGoogleOneTap();
 
-  const fetcher = useCallback(
-    async (url) => {
-      if (!token) return null;
-      const response = await fetch(url, { headers });
-      if (response.ok) return await response.json();
+  async function fetcher(url) {
+    if (!token) return null;
+
+    const response = await fetch(url, { headers });
+    if (response.ok) {
+      return await response.json();
+    } else {
       if (response.status === 403) signOut();
       const { error } = await response.json();
       throw new Error(error);
-    },
-    [token]
-  );
+    }
+  };
 
   return <SWRConfig value={{ fetcher }}>{children}</SWRConfig>;
 }
@@ -99,16 +147,16 @@ function DefaultFetcher({ children }) {
 
 ## Authenticate on The Server
 
-Install the Google authentication library:
+You'll need the Google authentication library (peer dependency):
 
 ```
 yarn add google-auth-library
 npm install google-auth-library
 ```
 
-Create an authorization handler, depends on your server-side framework:
+Create an authorization handler, varies by the server-side framework you use:
 
-```javascript
+```typescript
 import { authenticate } from "@assaf/react-one-tap/dist/server";
 
 const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -128,14 +176,18 @@ function authorize(handler) {
 router.get('/customers', authorize(getCustomers));
 ```
 
-The `authenticate` looks for a bearer token in the `Authorization` header, verifies its authenticity, and extracts the user profile form it.
+The `authenticate` function looks for an `Authorization` header with a bearer token in it. It verifies the token, this will reject revoked tokens (if the user signed out).
 
-It returns three properies:
+It returns three properties:
 
 - `status` is one of 200, 401, or 403
-- `profile` is the user profile if authenticated successfully
-- `message` is an error message (401/403)
+- `profile` is the user's profile, if authenticated succesfully
+- `message` is an error message to go along with 401/403 status code
 
-You have access to the user's full name, email address, and whether that address was verified or not (see [Profile](src/browser/Profile.ts)).  In addition, if the user account is managed by G Suite, then `profile.hd` will indicate that.
+From the profile, you have access to the user's name, email address, and whether that address was verified. See [Profile](src/browser/Profile.ts).
 
-For persistence, use `profile.sub` which is a unique and immutable user identifier. This allows the user to change their email address, and still sign into their account. Good practice is to save their new email address each time they're authenticated, andalso consider the `email_verified` field.
+You can check if the account is a G Suite account by looking at `profile.hd`, and authenticate based on the domain (ie `email: "me@example.com", hd: "example.com"` ).
+
+If you're storing state, use `profile.sub`, which is the unique and immutable user identifier.
+
+This allows users to change their email address. If you're using their email address from the profile, you may want to save is every so often.  And also consider the `email_verified` field.
