@@ -1,0 +1,14 @@
+{
+  "extends": "@tsconfig/recommended/tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "../../dist/types",
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react",
+    "outDir": "../../dist",
+    "strict": true,
+    "typeRoots": ["node_modules/@types"],
+  },
+  "exclude": ["node_modules"],
+  "include": ["index.ts"],
+}
