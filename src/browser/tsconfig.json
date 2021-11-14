@@ -7,8 +7,8 @@
     "jsx": "react",
     "outDir": "../../dist",
     "strict": true,
-    "typeRoots": ["node_modules/@types"],
+    "typeRoots": ["node_modules/@types"]
   },
   "exclude": ["node_modules"],
-  "include": ["index.ts"],
+  "include": ["index.ts"]
 }

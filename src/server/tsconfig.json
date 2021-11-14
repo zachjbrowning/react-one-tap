@@ -6,8 +6,8 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "../../dist/server",
     "strict": true,
-    "typeRoots": ["node_modules/@types"],
+    "typeRoots": ["node_modules/@types"]
   },
   "exclude": ["node_modules"],
-  "includs": ["index.ts"],
+  "includs": ["index.ts"]
 }
