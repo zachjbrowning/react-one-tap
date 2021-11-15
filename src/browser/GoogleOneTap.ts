@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import * as React from "react";
 import { Profile } from "./Profile";
 
 export declare type OneTapOptions = {
@@ -28,7 +28,20 @@ export declare type OneTapOptions = {
     buttonId: string;
     size?: "small" | "medium" | "large";
   };
+
+  // Ask user to re-authenticate before their session is about to expire.
+  //
+  // Can be expressed as number (milliseconds) or string (eg "5m", "30s").
+  // Default to "5m", so user prompted to re-authenticate 5 minutes before their
+  // session is about to expire.
+  //
+  // Set to zero to disable.
+  reauthenticate?: number | string;
 };
+
+// Ask user to re-authenticate 5 mintues before their session is about to
+// expire.
+const defaultReauthenticate = "5m";
 
 export declare type OneTapContext = {
   // Bearer token authorization header for the API call:
@@ -57,7 +70,6 @@ export const GoogleOneTapContext = React.createContext<OneTapContext>({
 
 export default function GoogleOneTap({
   children,
-  automatic = true,
   ...options
 }: {
   children: React.ReactNode | ((context: OneTapContext) => React.ReactNode);
@@ -65,22 +77,33 @@ export default function GoogleOneTap({
   const { profile, clearToken, setToken, token } = useLocalStorage(
     "google-one-tap-token"
   );
-  const { signOut } = useGoogleAPI({
+  const { signOut, withScript } = useGoogleAPI({
     clearToken,
     options,
     setToken,
     token,
   });
 
-  useEffect(
-    function () {
-      if (profile) {
-        const expiresIn = (profile.exp - profile.iat) * 1000;
-        const timeout = setTimeout(clearToken, expiresIn);
-        return () => clearTimeout(timeout);
-      }
+  React.useEffect(
+    function reauthenticateTimeout() {
+      if (!profile) return;
+
+      const expiresIn = profile.exp * 1000 - Date.now();
+      const leadTime = duration(
+        options.reauthenticate ?? defaultReauthenticate
+      );
+      if (!leadTime) return;
+
+      const promptIn = expiresIn - duration(leadTime);
+      if (promptIn < 0) return;
+
+      const timeout = setTimeout(
+        () => withScript(() => google.accounts.id.prompt()),
+        promptIn
+      );
+      return () => clearTimeout(timeout);
     },
-    [profile]
+    [profile?.exp]
   );
 
   const context: OneTapContext = {
@@ -91,13 +114,24 @@ export default function GoogleOneTap({
     token,
   };
 
-  return (
-    <GoogleOneTapContext.Provider value={context}>
-      {typeof children === "function" || children instanceof Function
-        ? children(context)
-        : children}
-    </GoogleOneTapContext.Provider>
+  return React.createElement(
+    GoogleOneTapContext.Provider,
+    { value: context },
+    typeof children === "function" || children instanceof Function
+      ? children(context)
+      : children
   );
+}
+
+function duration(value: number | string) {
+  if (typeof value === "number") return Math.max(value, 0);
+  if (typeof value !== "string") throw new Error(`Invalid value: ${value}`);
+  const match = /^(\d+)\s*(seconds?|secs?|s|minutes?|mins?|m)?$/i.exec(value);
+  if (!match) return 0;
+  const number = Math.max(parseFloat(match[1]), 0);
+  const type = match[2];
+  if (!type) return number;
+  return type.startsWith("m") ? number * 60 * 1000 : number * 1000;
 }
 
 // We use local storage, so user doesn't have to sign in again when they refresh
@@ -112,7 +146,10 @@ function useLocalStorage(keyName: string): {
   const [unverifiedToken, setToken] = React.useState(() =>
     typeof localStorage !== "undefined" ? localStorage.getItem(keyName) : null
   );
-  const profile = useMemo(() => verify(unverifiedToken), [unverifiedToken]);
+  const profile = React.useMemo(
+    () => verify(unverifiedToken),
+    [unverifiedToken]
+  );
   const token = (profile && unverifiedToken) ?? undefined;
 
   React.useEffect(function watchOtherTabs() {
@@ -165,16 +202,16 @@ function useGoogleAPI({
   token?: string;
 }): {
   signOut: () => void;
+  withScript: (callbackfn: () => unknown) => void;
 } {
   if (!options?.clientId) throw new Error("Missing clientId");
-  if (!(options.automatic || options.fallback?.buttonId))
-    throw new Error("Missing fallback.buttonId");
+  const automatic = options.automatic ?? true;
 
   const withScript = useWithScript();
 
   withScript(function initializeAPI() {
     google.accounts.id.initialize({
-      auto_select: options.automatic,
+      auto_select: automatic,
       callback: ({ credential }) => setToken(credential),
       client_id: options.clientId,
       context: options.context,
@@ -185,7 +222,7 @@ function useGoogleAPI({
     () =>
       withScript(() => {
         if (token) google.accounts.id.cancel();
-        else if (options.automatic) promptToSignIn(options);
+        else if (automatic) promptToSignIn(options);
         else renderSignInButton(options);
       }),
     [token]
@@ -204,7 +241,7 @@ function useGoogleAPI({
     [token]
   );
 
-  return { signOut };
+  return { signOut, withScript };
 }
 
 function promptToSignIn(options: OneTapOptions) {
