@@ -77,7 +77,7 @@ export default function GoogleOneTap({
   const { profile, clearToken, setToken, token } = useLocalStorage(
     "google-one-tap-token"
   );
-  const { signOut, withScript } = useGoogleAPI({
+  const { reauthenticate, signOut } = useGoogleAPI({
     clearToken,
     options,
     setToken,
@@ -85,22 +85,31 @@ export default function GoogleOneTap({
   });
 
   React.useEffect(
-    function reauthenticateTimeout() {
+    function signOutWhenTokenExpires() {
       if (!profile) return;
 
       const expiresIn = profile.exp * 1000 - Date.now();
+      if (expiresIn < 0) return;
+
+      const timeout = setTimeout(signOut, expiresIn);
+      return () => clearTimeout(timeout);
+    },
+    [profile?.exp]
+  );
+  React.useEffect(
+    function reauthenticateBeforeTokenExpires() {
+      if (!profile) return;
+
       const leadTime = duration(
         options.reauthenticate ?? defaultReauthenticate
       );
       if (!leadTime) return;
 
+      const expiresIn = profile.exp * 1000 - Date.now();
       const promptIn = expiresIn - duration(leadTime);
       if (promptIn < 0) return;
 
-      const timeout = setTimeout(
-        () => withScript(() => google.accounts.id.prompt()),
-        promptIn
-      );
+      const timeout = setTimeout(reauthenticate, promptIn);
       return () => clearTimeout(timeout);
     },
     [profile?.exp]
@@ -201,8 +210,8 @@ function useGoogleAPI({
   setToken: (token: string | null) => void;
   token?: string;
 }): {
+  reauthenticate: () => void;
   signOut: () => void;
-  withScript: (callbackfn: () => unknown) => void;
 } {
   if (!options?.clientId) throw new Error("Missing clientId");
   const automatic = options.automatic ?? true;
@@ -228,6 +237,14 @@ function useGoogleAPI({
     [token]
   );
 
+  const reauthenticate = React.useCallback(
+    () =>
+      withScript(() => {
+        google.accounts.id.prompt();
+      }),
+    [token]
+  );
+
   const signOut = React.useCallback(
     () =>
       withScript(() => {
@@ -241,7 +258,7 @@ function useGoogleAPI({
     [token]
   );
 
-  return { signOut, withScript };
+  return { reauthenticate, signOut };
 }
 
 function promptToSignIn(options: OneTapOptions) {
