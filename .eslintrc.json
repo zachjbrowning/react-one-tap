@@ -17,5 +17,7 @@
     }
   },
   "settings": { "react": { "version": "detect" } },
-  "rules": {}
+  "rules": {
+    "no-console": "error"
+  }
 }
