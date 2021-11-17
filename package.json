@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build && tsc src/server/authenticate.ts --outDir dist/server && cp src/server/authenticate.ts dist/server",
+    "build": "tsdx build && tsc src/server/index.ts -p src/server",
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },

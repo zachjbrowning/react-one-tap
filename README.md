@@ -108,7 +108,6 @@ function MyComponent() {
       if (response.ok) {
         return await response.json();
       } else {
-        if (response.status === 403) signOut();
         const { error } = await response.json();
         throw new Error(error);
       }
@@ -132,7 +131,6 @@ function WithFetcher({ children }) {
     if (response.ok) {
       return await response.json();
     } else {
-      if (response.status === 403) signOut();
       const { error } = await response.json();
       throw new Error(error);
     }
@@ -157,7 +155,7 @@ npm install google-auth-library
 Create an authorization handler, varies by the server-side framework you use:
 
 ```typescript
-import { authenticate } from "@assaf/react-one-tap/dist/server";
+import authenticate from "@assaf/react-one-tap/dist/server";
 
 const clientId = process.env.GOOGLE_CLIENT_ID;
 const users = ['hi@example.com'];
