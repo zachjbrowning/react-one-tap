@@ -1,7 +1,7 @@
 import * as React from "react";
-import { OneTapOptions, Profile } from ".";
+import { OneTapContext, OneTapOptions, Profile } from ".";
 import decodeJWT from "./decodeJWT";
-import OneTapContext from "./OneTapContext";
+import { OneTapContextProvider } from "./OneTapContext";
 import useGoogleAPI from "./useGoogleAPI";
 import useLocalStorage from "./useLocalStorage";
 
@@ -13,9 +13,7 @@ export default function GoogleOneTap({
   children,
   ...options
 }: {
-  children:
-    | React.ReactNode
-    | ((context: typeof OneTapContext) => React.ReactNode);
+  children: React.ReactNode | ((context: OneTapContext) => React.ReactNode);
 } & OneTapOptions) {
   const { clearToken, setToken, token } = useLocalStorage(
     "google-one-tap-token"
@@ -32,7 +30,7 @@ export default function GoogleOneTap({
   useSignOutWhenTokenExpires({ profile, signOut });
   useReauthenticateBeforeTokenExpires({ options, profile, reauthenticate });
 
-  const context: React.ContextType<typeof OneTapContext> = {
+  const context: OneTapContext = {
     headers: token ? { authorization: `Bearer ${token}` } : undefined,
     isSignedIn: Boolean(token),
     profile,
@@ -41,7 +39,7 @@ export default function GoogleOneTap({
   };
 
   return React.createElement(
-    OneTapContext.Provider,
+    OneTapContextProvider,
     { value: context },
     typeof children === "function" || children instanceof Function
       ? children(context)
