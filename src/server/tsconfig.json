@@ -2,17 +2,9 @@
   "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
     "declaration": true,
-    "declarationDir": "dist/server",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "importHelpers": true,
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "outDir": "dist/server",
-    "strict": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "target": "es5"
+    "declarationDir": "../../dist/server",
+    "outDir": "../../dist/server",
+    "sourceMap": true
   },
   "exclude": ["node_modules"],
   "includs": ["index.ts"]

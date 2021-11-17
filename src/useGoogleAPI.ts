@@ -1,5 +1,5 @@
 import * as React from "react";
-import { OneTapOptions } from "../types";
+import type { OneTapOptions } from ".";
 import decodeJWT from "./decodeJWT";
 
 // https://developers.google.com/identity/gsi/web/reference/js-reference

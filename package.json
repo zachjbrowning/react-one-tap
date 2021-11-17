@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build && tsc src/server/index.ts -p src/server",
+    "build": "tsdx build && tsc -p src/server",
     "lint": "tsdx lint",
     "prepare": "tsdx build"
   },

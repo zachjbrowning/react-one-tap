@@ -1,5 +1,5 @@
 import * as React from "react";
-import { OneTapContext } from "../types";
+import type { OneTapContext } from ".";
 
 export default React.createContext<OneTapContext>({
   isSignedIn: false,
