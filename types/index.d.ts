@@ -35,3 +35,50 @@ export declare type OneTapOptions = {
   // Set to zero to disable.
   reauthenticate?: number | string;
 };
+
+export declare type OneTapContext = {
+  // Bearer token authorization header for the API call:
+  //
+  // Authorization: Bearer <token>
+  headers?: { authorization: string };
+
+  isSignedIn: boolean;
+
+  // JTW token payload provides user name, email address, photo, etc.
+  profile?: Profile;
+
+  // Call this function to sign-out the user from this and all other tabs.
+  //
+  // You can also call this if the server responds with 403 (access token revoked).
+  signOut: () => void;
+
+  // This is the OAuth Bearer token.
+  token: string | null;
+};
+
+export declare type Profile = {
+  // User's email address.
+  email: string;
+  // True if user's email address was verified
+  email_verified: boolean;
+  // Issuer of the JWT token
+  iss: "https://accounts.google.com";
+  // User's profile picture.
+  picture: string;
+  // Unique immutable identifier of the user.
+  sub: string;
+  // User's given name
+  given_name: string;
+  // User's family name
+  family_name: string;
+  // User's full name
+  name: string;
+  // The audience for this token: same as client ID
+  aud: string;
+  // Timestamp when token was issued (Unix time, seconds)
+  iat: number;
+  // Timestamp when this token expires (Unix time, seconds)
+  exp: number;
+  // The hosted G Suite domain of the user. Available when user belongs to a hosted domain.
+  hd?: string;
+};

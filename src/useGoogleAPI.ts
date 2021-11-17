@@ -1,6 +1,6 @@
 import * as React from "react";
+import { OneTapOptions } from "../types";
 import decodeJWT from "./decodeJWT";
-import { OneTapOptions } from "./OneTapOptions";
 
 // https://developers.google.com/identity/gsi/web/reference/js-reference
 export default function useGoogleAPI({

@@ -1,4 +1,4 @@
-import { Profile } from "./Profile";
+import { Profile } from "../types";
 
 export default function decodeJWT(token: string | null): Profile | undefined {
   if (!token) return;

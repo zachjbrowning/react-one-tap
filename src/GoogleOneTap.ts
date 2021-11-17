@@ -1,8 +1,7 @@
 import * as React from "react";
+import { OneTapOptions, Profile } from "../types";
 import decodeJWT from "./decodeJWT";
 import OneTapContext from "./OneTapContext";
-import { OneTapOptions } from "./OneTapOptions";
-import { Profile } from "./Profile";
 import useGoogleAPI from "./useGoogleAPI";
 import useLocalStorage from "./useLocalStorage";
 
