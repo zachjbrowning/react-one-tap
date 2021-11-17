@@ -1,6 +1,6 @@
 import { useContext } from "react";
-import { GoogleOneTapContext } from "./GoogleOneTap";
+import OneTapContext from "./OneTapContext";
 
 export default function useGoogleOneTap() {
-  return useContext(GoogleOneTapContext);
+  return useContext(OneTapContext);
 }
