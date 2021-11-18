@@ -1,15 +1,15 @@
 {
   "name": "@assaf/react-one-tap",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "description": "Google One Tap for React",
   "main": "dist/index.js",
   "module": "dist/react-one-tap.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "start": "tsdx watch",
-    "build": "tsdx build && tsc -p src/server",
+    "build": "tsdx build && yarn tsc --build src/server",
     "lint": "yarn eslint src",
-    "prepare": "tsdx build"
+    "prepare": "yarn build"
   },
   "author": "Assaf Arkin <assaf@labnotes.org> (https://labnotes.org/)",
   "homepage": "https://github.com/assaf/react-one-tap",
