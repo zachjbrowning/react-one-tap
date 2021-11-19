@@ -4,12 +4,10 @@ import decodeJWT from "./decodeJWT";
 
 // https://developers.google.com/identity/gsi/web/reference/js-reference
 export default function useGoogleAPI({
-  clearToken,
   options,
   setToken,
   token,
 }: {
-  clearToken: () => void;
   options: OneTapOptions;
   setToken: (token: string | null) => void;
   token: string | null;
@@ -53,13 +51,13 @@ export default function useGoogleAPI({
       withScript(() => {
         if (!token) return;
 
-        clearToken();
+        setToken(null);
 
         const profile = decodeJWT(token);
         if (profile) google.accounts.id.revoke(profile.sub);
         google.accounts.id.disableAutoSelect();
       }),
-    [clearToken, token, withScript]
+    [setToken, token, withScript]
   );
 
   return { reauthenticate, signOut };

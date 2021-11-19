@@ -15,13 +15,9 @@ export default function GoogleOneTap({
 }: {
   children: React.ReactNode | ((context: OneTapContext) => React.ReactNode);
 } & OneTapOptions) {
-  const { clearToken, setToken, token } = useLocalStorage(
-    "google-one-tap-token"
-  );
-  const profile = React.useMemo(() => decodeJWT(token), [token]);
+  const { profile, setToken, token } = useVerifiedToken();
 
   const { reauthenticate, signOut } = useGoogleAPI({
-    clearToken,
     options,
     setToken,
     token,
@@ -45,6 +41,16 @@ export default function GoogleOneTap({
       ? children(context)
       : children
   );
+}
+
+function useVerifiedToken() {
+  const { setToken, token } = useLocalStorage("google-one-tap-token");
+  const profile = React.useMemo(() => decodeJWT(token), [token]);
+  return {
+    profile,
+    setToken,
+    token: profile ? token : null,
+  };
 }
 
 function useSignOutWhenTokenExpires({

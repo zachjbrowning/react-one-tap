@@ -4,7 +4,6 @@ import * as React from "react";
 // the page, or open a new tab.  And when the user signs out, they are signed
 // out of all open tabs.
 export default function useLocalStorage(keyName: string): {
-  clearToken: () => void;
   setToken: (token: string | null) => void;
   token: string | null;
 } {
@@ -35,6 +34,5 @@ export default function useLocalStorage(keyName: string): {
   return {
     token,
     setToken,
-    clearToken: () => setToken(null),
   };
 }
