@@ -20,6 +20,7 @@ jobs:
       - run: git config --global user.name "Assaf Arkin"
       - run: git config --global user.email "assaf@labnotes.org"
       - run: yarn install
+      - run: yarn lint
       - run: yarn publish --new-version ${{ github.event.release.tag_name }} --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
