@@ -33,7 +33,7 @@ export declare type OneTapOptions = {
   // session is about to expire.
   //
   // Set to zero to disable.
-  reauthenticate?: number | string;
+  reauthenticate?: number | string | false;
 };
 
 export declare type OneTapContext = {

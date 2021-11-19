@@ -43,7 +43,12 @@ export default function GoogleOneTap({
   );
 }
 
-function useVerifiedToken() {
+// Return token and profile if token has not expired yet.
+function useVerifiedToken(): {
+  profile?: Profile;
+  setToken: (token: string | null) => void;
+  token: string | null;
+} {
   const { setToken, token } = useLocalStorage("google-one-tap-token");
   const profile = React.useMemo(() => decodeJWT(token), [token]);
   return {
@@ -53,6 +58,7 @@ function useVerifiedToken() {
   };
 }
 
+// Sign out user the moment their token expires
 function useSignOutWhenTokenExpires({
   profile,
   signOut,
@@ -71,6 +77,7 @@ function useSignOutWhenTokenExpires({
   }, [profile, signOut]);
 }
 
+// Re-authenticate user before their token expires
 function useReauthenticateBeforeTokenExpires({
   options,
   profile,
@@ -83,11 +90,11 @@ function useReauthenticateBeforeTokenExpires({
   React.useEffect(() => {
     if (!profile) return;
 
-    const leadTime = duration(options.reauthenticate ?? defaultReauthenticate);
+    const leadTime = getLeadTime(options);
     if (!leadTime) return;
 
     const expiresIn = profile.exp * 1000 - Date.now();
-    const promptIn = expiresIn - duration(leadTime);
+    const promptIn = expiresIn - leadTime;
     if (promptIn < 0) return;
 
     const timeout = setTimeout(reauthenticate, promptIn);
@@ -95,13 +102,16 @@ function useReauthenticateBeforeTokenExpires({
   }, [profile, options, reauthenticate]);
 }
 
-function duration(value: number | string) {
-  if (typeof value === "number") return Math.max(value, 0);
-  if (typeof value !== "string") throw new Error(`Invalid value: ${value}`);
+function getLeadTime(options: OneTapOptions): number {
+  const leadTime = options.reauthenticate ?? defaultReauthenticate;
+  if (leadTime === false) return 0;
+  if (typeof leadTime === "number") return Math.max(leadTime, 0);
+  if (typeof leadTime !== "string")
+    throw new Error(`Invalid value: ${leadTime}`);
 
   const match =
     /^(\d+)\s*(seconds?|secs?|s|minutes?|mins?|m|milliseconds?|ms)?$/i.exec(
-      value
+      leadTime
     );
   if (!match) return 0;
 
