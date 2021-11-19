@@ -18,13 +18,12 @@ export default function useGoogleAPI({
   signOut: () => void;
 } {
   if (!options?.clientId) throw new Error("Missing clientId");
-  const automatic = options.automatic ?? true;
 
   const withScript = useWithScript();
 
   withScript(function initializeAPI() {
     google.accounts.id.initialize({
-      auto_select: automatic,
+      auto_select: options.automatic ?? true,
       callback: ({ credential }) => setToken(credential),
       client_id: options.clientId,
       context: options.context,
@@ -35,10 +34,10 @@ export default function useGoogleAPI({
     () =>
       withScript(() => {
         if (token) google.accounts.id.cancel();
-        else if (automatic) promptToSignIn(options);
+        else if (options.automatic ?? true) promptToSignIn(options);
         else renderSignInButton(options);
       }),
-    [token]
+    [options, token, withScript]
   );
 
   const reauthenticate = React.useCallback(
@@ -46,7 +45,7 @@ export default function useGoogleAPI({
       withScript(() => {
         google.accounts.id.prompt();
       }),
-    [token]
+    [withScript]
   );
 
   const signOut = React.useCallback(
@@ -60,7 +59,7 @@ export default function useGoogleAPI({
         if (profile) google.accounts.id.revoke(profile.sub);
         google.accounts.id.disableAutoSelect();
       }),
-    [token]
+    [clearToken, token, withScript]
   );
 
   return { reauthenticate, signOut };
@@ -71,22 +70,25 @@ function useWithScript(): (callbackfn: () => unknown) => void {
     []
   );
 
-  React.useEffect(function () {
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.addEventListener("load", onLoad);
-    document.head.appendChild(script);
+  React.useEffect(
+    function () {
+      const script = document.createElement("script");
+      script.src = "https://accounts.google.com/gsi/client";
+      script.addEventListener("load", onLoad);
+      document.head.appendChild(script);
 
-    return function () {
-      script.removeEventListener("load", onLoad);
-      queue.length = 0;
-    };
+      return function () {
+        script.removeEventListener("load", onLoad);
+        queue.length = 0;
+      };
 
-    function onLoad() {
-      queue.forEach((callbackfn) => callbackfn(script));
-      queue.length = 0;
-    }
-  }, []);
+      function onLoad() {
+        queue.forEach((callbackfn) => callbackfn(script));
+        queue.length = 0;
+      }
+    },
+    [queue]
+  );
 
   return function (callbackfn) {
     const isScriptLoaded =

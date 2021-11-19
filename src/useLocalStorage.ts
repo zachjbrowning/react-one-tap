@@ -12,21 +12,24 @@ export default function useLocalStorage(keyName: string): {
     typeof localStorage !== "undefined" ? localStorage.getItem(keyName) : null
   );
 
-  React.useEffect(function watchOtherTabs() {
-    window.addEventListener("storage", onStorageEvent);
-    return () => window.removeEventListener("storage", onStorageEvent);
+  React.useEffect(
+    function watchOtherTabs() {
+      window.addEventListener("storage", onStorageEvent);
+      return () => window.removeEventListener("storage", onStorageEvent);
 
-    function onStorageEvent(event: StorageEvent) {
-      if (event.key === keyName) setToken(event.newValue);
-    }
-  }, []);
+      function onStorageEvent(event: StorageEvent) {
+        if (event.key === keyName) setToken(event.newValue);
+      }
+    },
+    [keyName]
+  );
 
   React.useEffect(
     function persistToken() {
       if (token) window.localStorage.setItem(keyName, token);
       else window.localStorage.removeItem(keyName);
     },
-    [token]
+    [keyName, token]
   );
 
   return {

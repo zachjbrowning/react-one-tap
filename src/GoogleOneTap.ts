@@ -62,7 +62,7 @@ function useSignOutWhenTokenExpires({
 
     const timeout = setTimeout(signOut, expiresIn);
     return () => clearTimeout(timeout);
-  }, [profile?.exp]);
+  }, [profile, signOut]);
 }
 
 function useReauthenticateBeforeTokenExpires({
@@ -86,7 +86,7 @@ function useReauthenticateBeforeTokenExpires({
 
     const timeout = setTimeout(reauthenticate, promptIn);
     return () => clearTimeout(timeout);
-  }, [profile?.exp]);
+  }, [profile, options, reauthenticate]);
 }
 
 function duration(value: number | string) {
