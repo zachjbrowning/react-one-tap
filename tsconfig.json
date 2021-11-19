@@ -4,6 +4,7 @@
     "declaration": true,
     "declarationDir": "dist",
     "module": "ESNext",
+    "moduleResolution": "node",
     "outDir": "dist",
     "sourceMap": true
   },
