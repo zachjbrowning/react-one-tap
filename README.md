@@ -1,6 +1,6 @@
 # React component for [one-tap sign-in](https://developers.google.com/identity/one-tap/) with your Google account
 
-<video src="example/demo.mp4" autoplay controls play></video>
+<video src="https://rawcdn.githack.com/assaf/react-one-tap/1c75d14254d7a12639ff17bcb2a05e373abdc1c0/example/demo.mp4" autoplay controls play></video>
 
 
 ## Why?
