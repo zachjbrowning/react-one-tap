@@ -1,7 +1,7 @@
 {
   "name": "@assaf/react-one-tap",
   "version": "2.1.0",
-  "description": "Google One Tap for React",
+  "description": "React component for Google One-Tap",
   "main": "dist/index.js",
   "module": "dist/react-one-tap.esm.js",
   "types": "dist/index.d.ts",

@@ -1,4 +1,6 @@
-React components for [one-tap sign-in](https://developers.google.com/identity/one-tap/) with your Google account.
+# React component for [one-tap sign-in](https://developers.google.com/identity/one-tap/) with your Google account
+
+<video src="example/demo.mp4" autoplay controls play></video>
 
 
 ## Why?
@@ -72,7 +74,7 @@ function LoginRequired({ children }) {
         </main>
       ) : (
         <main className="sign-in-page">
-          <div id={buttonId /}>
+          <div id={buttonId} />
         </main>
       )}
     </GoogleOneTap>
