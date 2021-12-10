@@ -1,17 +1,20 @@
-import authenticate from "@assaf/react-one-tap/dist/server";
+import { authenticate } from "@assaf/react-one-tap";
 
 const clientId = process.env.GOOGLE_CLIENT_ID;
 const users = ["hi@example.com"];
 
 function authorize(handler) {
-  return async function (req, res) {
-    const { status, profile, message } = await authenticate({ clientId, req });
-    if (!profile) return res.status(status).send(message);
+  return async function (request, response) {
+    const { status, profile, message } = await authenticate({
+      clientId,
+      req: request,
+    });
+    if (!profile) return response.status(status).send(message);
 
     const isAuthorized =
       profile.email_verified && users.includes(profile.email);
-    if (isAuthorized) handler(req, res);
-    else res.status(403).send("Access denied");
+    if (isAuthorized) handler(request, response);
+    else response.status(403).send("Access denied");
   };
 }
 

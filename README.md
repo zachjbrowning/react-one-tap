@@ -147,33 +147,45 @@ function WithFetcher({ children }) {
 
 ## Authenticate on The Server
 
-You'll need the Google authentication library (peer dependency):
-
-```
-yarn add google-auth-library
-npm install google-auth-library
-```
-
 Create an authorization handler, varies by the server-side framework you use:
 
 ```typescript
-import authenticate from "@assaf/react-one-tap/dist/server";
+// Express, Connect, etc
+import { authenticate } from "@assaf/react-one-tap";
 
 const clientId = process.env.GOOGLE_CLIENT_ID;
 const users = ['hi@example.com'];
 
 function authorize(handler) {
-  return async function (req, res) {
-    const { status, profile, message } = await authenticate({ clientId, req });
-    if (!profile) return res.status(status).send(message);
+  return async function (request, response) {
+    const { status, profile, message } = await authenticate({ clientId, request });
+    if (!profile) return response.status(status).send(message);
 
     const isAuthorized = profile.email_verified && users.includes(profile.email);
-    if (isAuthorized) handler(req, res);
-    else res.status(403).send("Access denied");
+    if (isAuthorized) handler(request, response);
+    else response.status(403).send("Access denied");
   }
 };
 
 router.get('/customers', authorize(getCustomers));
+```
+
+```typescript
+// Next.js middelware
+import { authenticate } from "@assaf/react-one-tap";
+
+const clientId = process.env.GOOGLE_CLIENT_ID;
+const users = ['hi@example.com'];
+
+export default async function middleware(request) {
+  const { status, profile, message } = await authenticate({ clientId, request });
+  if (!profile) return new Response(message, { status });
+
+  const isAuthorized = profile.email_verified && users.includes(profile.email);
+  if (!isAuthorized) throw new Response("Access denied!", { status: 403 });
+
+  return NextResponse.next();
+}
 ```
 
 The `authenticate` function looks for an `Authorization` header with a bearer token in it. It verifies the token, this will reject revoked tokens (if the user signed out).
